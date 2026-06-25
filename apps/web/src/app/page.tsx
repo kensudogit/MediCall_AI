@@ -1,4 +1,4 @@
-import { api, CallSession, AdminStats } from '@/lib/api';
+import { api, CallSession, AdminStats, HealthStatus } from '@/lib/api';
 import Link from 'next/link';
 
 const intentLabels: Record<string, string> = {
@@ -21,13 +21,13 @@ const intentLabels: Record<string, string> = {
 export default async function DashboardPage() {
   let calls: CallSession[] = [];
   let stats: AdminStats | null = null;
-  let health = { status: 'unknown', openai: false };
+  let health: HealthStatus = { status: 'unknown', openai: false };
 
   try {
     [calls, stats, health] = await Promise.all([
       api<CallSession[]>('/api/admin/calls'),
       api<AdminStats>('/api/admin/stats'),
-      api('/api/health'),
+      api<HealthStatus>('/api/health'),
     ]);
   } catch {
     /* API offline */

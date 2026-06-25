@@ -78,3 +78,8 @@ export interface AdminStats {
   transferredCalls: number;
   emergencyCalls: number;
 }
+
+export interface HealthStatus {
+  status: string;
+  openai: boolean;
+}
