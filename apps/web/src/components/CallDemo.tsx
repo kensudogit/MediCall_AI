@@ -242,7 +242,7 @@ export function CallDemo() {
             <input
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
-              disabled={!active}
+              disabled={loading}
               placeholder="山田 太郎"
             />
           </div>
@@ -251,10 +251,11 @@ export function CallDemo() {
             <input
               value={dateOfBirth}
               onChange={(e) => setDateOfBirth(e.target.value)}
-              disabled={!active}
+              disabled={loading}
               placeholder="1985-04-12"
             />
           </div>
+          <p className="call-hint">予約のテスト時は、通話開始前に氏名・生年月日を入力してください。</p>
           <label className="call-checkbox">
             <input
               type="checkbox"
