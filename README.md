@@ -77,6 +77,25 @@ cd apps/web && npm install && npm run dev
 - `GET/PUT /api/admin/clinic` — 医院設定
 - `GET /api/admin/appointments` — 予約一覧
 
+## Railway デプロイ
+
+リポジトリ直下の `Dockerfile` + `railway.toml` で **Next.js + Spring Boot を1サービス** としてデプロイします。
+
+### 設定手順
+
+1. Railway で Postgres サービスを追加
+2. アプリサービスの Variables に以下を設定:
+   - `DATABASE_URL` = `${{Postgres.DATABASE_URL}}`
+   - `OPENAI_API_KEY` = （任意）
+   - `DEV_MODE` = `true`（OAuth2 無効、本番では `false` + `OAUTH2_ISSUER_URI`）
+3. **Root Directory** は空のまま（リポジトリルート）
+4. **Config file path** = `/railway.toml`
+
+### 注意
+
+- pgvector 拡張が必要です。Railway Postgres で `CREATE EXTENSION vector;` が使えない場合は pgvector 対応の DB を使用してください。
+- ヘルスチェック: `/api/health`
+
 ## インフラ
 
 - `infra/terraform/` — AWS VPC, RDS PostgreSQL, ECS, CloudWatch
@@ -85,4 +104,3 @@ cd apps/web && npm install && npm run dev
 ## ライセンス
 
 Proprietary
-"# MediCall_AI" 

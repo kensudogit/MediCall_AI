@@ -1,7 +1,10 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+const API_BASE =
+  typeof window !== 'undefined'
+    ? ''
+    : process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 
 export async function api<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, {
+  const res = await fetch(`${API_BASE}${path}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
