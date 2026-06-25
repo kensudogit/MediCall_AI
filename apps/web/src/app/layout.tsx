@@ -16,6 +16,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <h1>MediCall AI</h1>
             <nav>
               <a href="/">ダッシュボード</a>
+              <a href="/call">通話デモ</a>
               <a href="/calls">通話履歴</a>
               <a href="/faq">FAQ管理</a>
               <a href="/clinic">医院設定</a>

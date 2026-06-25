@@ -33,10 +33,11 @@ public class ConnectWebhookController {
     public ResponseEntity<Map<String, Object>> start(@RequestBody Map<String, String> body) {
         String contactId = body.getOrDefault("contactId", UUID.randomUUID().toString());
         String phone = body.getOrDefault("callerPhone", body.get("phone"));
-        CallSession session = orchestration.startSession(contactId, phone);
+        var result = orchestration.startSession(contactId, phone);
         return ResponseEntity.ok(Map.of(
-                "sessionId", session.getId().toString(),
-                "status", session.getStatus()
+                "sessionId", result.session().getId().toString(),
+                "status", result.session().getStatus(),
+                "greeting", result.greeting()
         ));
     }
 

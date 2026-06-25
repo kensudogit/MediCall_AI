@@ -83,3 +83,22 @@ export interface HealthStatus {
   status: string;
   openai: boolean;
 }
+
+export interface CallStartResponse {
+  sessionId: string;
+  status: string;
+  greeting: string;
+}
+
+export interface CallResponse {
+  text: string;
+  action: string;
+  intent: string;
+  transfer: boolean;
+  transferReason?: string;
+  audioUrl?: string;
+}
+
+export interface CallEndResponse {
+  summary: string;
+}

@@ -19,8 +19,7 @@ public class CallOrchestrationService {
     private final IdentityVerificationService identityService;
     private final AppointmentService appointmentService;
     private final FaqService faqService;
-    private final RagService ragService;
-    private final OpenAiService openAiService;
+    private final FaqAiService faqAiService;
     private final PollyService pollyService;
 
     public CallOrchestrationService(CallSessionRepository sessionRepository,
@@ -31,8 +30,7 @@ public class CallOrchestrationService {
                                     IdentityVerificationService identityService,
                                     AppointmentService appointmentService,
                                     FaqService faqService,
-                                    RagService ragService,
-                                    OpenAiService openAiService,
+                                    FaqAiService faqAiService,
                                     PollyService pollyService) {
         this.sessionRepository = sessionRepository;
         this.turnRepository = turnRepository;
@@ -42,8 +40,7 @@ public class CallOrchestrationService {
         this.identityService = identityService;
         this.appointmentService = appointmentService;
         this.faqService = faqService;
-        this.ragService = ragService;
-        this.openAiService = openAiService;
+        this.faqAiService = faqAiService;
         this.pollyService = pollyService;
     }
 
@@ -53,8 +50,10 @@ public class CallOrchestrationService {
     public record CallResponse(String text, CallAction action, CallIntent intent,
                                boolean transfer, String transferReason, String audioUrl) {}
 
+    public record StartSessionResult(CallSession session, String greeting) {}
+
     @Transactional
-    public CallSession startSession(String connectContactId, String callerPhone) {
+    public StartSessionResult startSession(String connectContactId, String callerPhone) {
         CallSession session = new CallSession();
         session.setConnectContactId(connectContactId);
         session.setCallerPhone(callerPhone);
@@ -64,7 +63,7 @@ public class CallOrchestrationService {
         String greeting = faqService.getClinicSettings().getClinicName()
                 + "です。自動応答がご案内いたします。ご用件をお話しください。";
         saveTurn(session.getId(), "assistant", greeting, null, CallAction.RESPOND.name());
-        return session;
+        return new StartSessionResult(session, greeting);
     }
 
     @Transactional
@@ -110,7 +109,7 @@ public class CallOrchestrationService {
             return transfer(session, CallIntent.HUMAN_TRANSFER, prohibitedGuard.safeFallback());
         }
 
-        if (intent == CallIntent.UNKNOWN) {
+        if (responseText == null || responseText.isBlank()) {
             return transfer(session, CallIntent.HUMAN_TRANSFER, "ご用件を確認できませんでした。職員におつなぎします。");
         }
 
@@ -120,13 +119,15 @@ public class CallOrchestrationService {
     }
 
     private String buildResponse(CallSession session, CallIntent intent, String utterance) {
-        ClinicSettings clinic = faqService.getClinicSettings();
+        if (usesFaqAi(intent)) {
+            var result = faqAiService.answer(utterance, intent);
+            if (result.shouldTransfer()) {
+                return null;
+            }
+            return result.text();
+        }
 
         return switch (intent) {
-            case HOURS -> clinic.getHoursText();
-            case HOLIDAY -> clinic.getHolidaysText();
-            case ACCESS -> clinic.getAccessText();
-            case BELONGINGS -> clinic.getBelongingsText();
             case APPOINTMENT_NEW -> {
                 if (session.getPatientId() != null) {
                     var appt = appointmentService.create(session.getPatientId(), null, "内科", utterance);
@@ -136,25 +137,21 @@ public class CallOrchestrationService {
             }
             case APPOINTMENT_CHANGE -> "予約変更を承ります。変更前の予約日と新しいご希望日をお伝えください。";
             case APPOINTMENT_CANCEL -> "予約キャンセルを承ります。キャンセルする予約日をお伝えください。";
-            case LAB -> "検査に関するご案内です。採血は予約制となっております。詳細は職員がご案内いたします。";
-            case BILLING -> "会計・料金に関するお問い合わせです。窓口または会計担当へおつなぎすることもできます。";
-            case PHARMACY -> "お薬に関するご質問です。処方内容の確認は医師・薬剤師が対応いたします。";
-            case REFERRAL -> "紹介状の発行についてご案内します。担当医の診察後、窓口でお申し出ください。";
-            case FAQ -> {
-                String faq = faqService.findBestAnswer(utterance);
-                if (faq != null) yield faq;
-                String rag = ragService.searchContext(utterance, 3);
-                if (!rag.isBlank()) {
-                    yield openAiService.chat(
-                            "FAQに基づき簡潔に回答。診断・処方・重症度判断は禁止。",
-                            "質問: " + utterance + "\n参考:\n" + rag);
-                }
-                yield "該当するFAQが見つかりませんでした。";
-            }
-            default -> openAiService.chat(
-                    "医療コールセンターAI。診断・処方・重症度判断は禁止。案内のみ。",
-                    utterance);
+            default -> faqAiService.answer(utterance, CallIntent.FAQ).text();
         };
+    }
+
+    private boolean usesFaqAi(CallIntent intent) {
+        return intent == CallIntent.FAQ
+                || intent == CallIntent.HOURS
+                || intent == CallIntent.HOLIDAY
+                || intent == CallIntent.ACCESS
+                || intent == CallIntent.BELONGINGS
+                || intent == CallIntent.LAB
+                || intent == CallIntent.BILLING
+                || intent == CallIntent.PHARMACY
+                || intent == CallIntent.REFERRAL
+                || intent == CallIntent.UNKNOWN;
     }
 
     private boolean requiresIdentity(CallIntent intent) {

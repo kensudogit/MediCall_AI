@@ -8,9 +8,11 @@ import com.medicall.repository.CallTurnRepository;
 import com.medicall.service.AdminStatsService;
 import com.medicall.service.AppointmentService;
 import com.medicall.service.FaqService;
+import com.medicall.service.FaqKnowledgeSyncService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -22,17 +24,20 @@ public class AdminController {
     private final FaqService faqService;
     private final AppointmentService appointmentService;
     private final AdminStatsService adminStatsService;
+    private final FaqKnowledgeSyncService knowledgeSync;
 
     public AdminController(CallSessionRepository sessionRepository,
                            CallTurnRepository turnRepository,
                            FaqService faqService,
                            AppointmentService appointmentService,
-                           AdminStatsService adminStatsService) {
+                           AdminStatsService adminStatsService,
+                           FaqKnowledgeSyncService knowledgeSync) {
         this.sessionRepository = sessionRepository;
         this.turnRepository = turnRepository;
         this.faqService = faqService;
         this.appointmentService = appointmentService;
         this.adminStatsService = adminStatsService;
+        this.knowledgeSync = knowledgeSync;
     }
 
     @GetMapping("/stats")
@@ -88,6 +93,12 @@ public class AdminController {
     public ResponseEntity<Void> deleteFaq(@PathVariable Long id) {
         faqService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/faq/reindex")
+    public ResponseEntity<Map<String, String>> reindexFaq() {
+        knowledgeSync.syncAll();
+        return ResponseEntity.ok(Map.of("status", "ok", "message", "FAQ knowledge reindexed"));
     }
 
     @GetMapping("/clinic")

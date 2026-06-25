@@ -50,6 +50,16 @@ public class IntentClassificationService {
                 return entry.getValue();
             }
         }
-        return CallIntent.UNKNOWN;
+        if (looksLikeQuestion(text)) {
+            return CallIntent.FAQ;
+        }
+        return CallIntent.FAQ;
+    }
+
+    private boolean looksLikeQuestion(String text) {
+        return text.contains("?") || text.contains("？")
+                || text.contains("教えて") || text.contains("ください")
+                || text.contains("ですか") || text.contains("でしょうか")
+                || text.contains("知りたい") || text.contains("聞きたい");
     }
 }
