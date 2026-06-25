@@ -1,26 +1,55 @@
 package com.medicall.service;
 
 import com.medicall.domain.Appointment;
+import com.medicall.domain.Patient;
 import com.medicall.repository.AppointmentRepository;
+import com.medicall.repository.PatientRepository;
+import com.medicall.api.dto.AppointmentView;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class AppointmentService {
 
     private final AppointmentRepository appointmentRepository;
+    private final PatientRepository patientRepository;
 
-    public AppointmentService(AppointmentRepository appointmentRepository) {
+    public AppointmentService(AppointmentRepository appointmentRepository,
+                              PatientRepository patientRepository) {
         this.appointmentRepository = appointmentRepository;
+        this.patientRepository = patientRepository;
     }
 
     public List<Appointment> listAll() {
         return appointmentRepository.findByStatusOrderByScheduledAtAsc("CONFIRMED");
+    }
+
+    public List<AppointmentView> listAllForAdmin() {
+        Map<Long, Patient> patients = patientRepository.findAll().stream()
+                .collect(Collectors.toMap(Patient::getId, p -> p));
+        return appointmentRepository.findAllByOrderByScheduledAtDesc().stream()
+                .map(a -> toView(a, patients.get(a.getPatientId())))
+                .toList();
+    }
+
+    private AppointmentView toView(Appointment a, Patient p) {
+        return new AppointmentView(
+                a.getId(),
+                a.getPatientId(),
+                p != null ? p.getFullName() : null,
+                p != null ? p.getPhoneNumber() : null,
+                a.getScheduledAt(),
+                a.getDepartment(),
+                a.getStatus(),
+                a.getNotes()
+        );
     }
 
     public List<Appointment> listByPatient(Long patientId) {

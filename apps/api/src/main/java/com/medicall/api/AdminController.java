@@ -1,8 +1,11 @@
 package com.medicall.api;
 
+import com.medicall.api.dto.AppointmentView;
+import com.medicall.api.dto.AdminStats;
 import com.medicall.domain.*;
 import com.medicall.repository.CallSessionRepository;
 import com.medicall.repository.CallTurnRepository;
+import com.medicall.service.AdminStatsService;
 import com.medicall.service.AppointmentService;
 import com.medicall.service.FaqService;
 import org.springframework.http.ResponseEntity;
@@ -18,15 +21,23 @@ public class AdminController {
     private final CallTurnRepository turnRepository;
     private final FaqService faqService;
     private final AppointmentService appointmentService;
+    private final AdminStatsService adminStatsService;
 
     public AdminController(CallSessionRepository sessionRepository,
                            CallTurnRepository turnRepository,
                            FaqService faqService,
-                           AppointmentService appointmentService) {
+                           AppointmentService appointmentService,
+                           AdminStatsService adminStatsService) {
         this.sessionRepository = sessionRepository;
         this.turnRepository = turnRepository;
         this.faqService = faqService;
         this.appointmentService = appointmentService;
+        this.adminStatsService = adminStatsService;
+    }
+
+    @GetMapping("/stats")
+    public AdminStats stats() {
+        return adminStatsService.getStats();
     }
 
     @GetMapping("/calls")
@@ -96,7 +107,7 @@ public class AdminController {
     }
 
     @GetMapping("/appointments")
-    public List<Appointment> listAppointments() {
-        return appointmentService.listAll();
+    public List<AppointmentView> listAppointments() {
+        return appointmentService.listAllForAdmin();
     }
 }

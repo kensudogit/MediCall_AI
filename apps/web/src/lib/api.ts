@@ -61,8 +61,20 @@ export interface ClinicSettings {
 export interface Appointment {
   id: number;
   patientId?: number;
+  patientName?: string;
+  patientPhone?: string;
   scheduledAt: string;
   department: string;
   status: string;
   notes?: string;
+}
+
+export interface AdminStats {
+  patientCount: number;
+  appointmentCount: number;
+  confirmedAppointments: number;
+  callCount: number;
+  activeCalls: number;
+  transferredCalls: number;
+  emergencyCalls: number;
 }
