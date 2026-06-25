@@ -46,6 +46,7 @@ resolve_database_env() {
 resolve_database_env
 DB_HOST="$(echo "$SPRING_DATASOURCE_URL" | sed -n 's|jdbc:postgresql://\([^:/]*\).*|\1|p')"
 echo "[start] Database host: ${DB_HOST:-unknown}"
+export DEV_MODE="${DEV_MODE:-true}"
 
 cd /app/backend
 echo "[start] Launching Spring Boot on port ${BACKEND_PORT}..."
