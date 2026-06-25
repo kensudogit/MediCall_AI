@@ -16,6 +16,11 @@ public class FaqKnowledgeBootstrap {
 
     @EventListener(ApplicationReadyEvent.class)
     public void onReady() {
-        syncService.syncAll();
+        try {
+            syncService.syncAll();
+        } catch (Exception ex) {
+            // pgvector / OpenAI 未設定でも通話 API は動作させる
+            System.err.println("[medicall] FAQ knowledge sync skipped: " + ex.getMessage());
+        }
     }
 }

@@ -72,6 +72,7 @@ if [ "$READY" -eq 0 ]; then
 fi
 
 FRONTEND_PORT="${PORT:-3000}"
+export API_URL="http://127.0.0.1:${BACKEND_PORT}"
 cd /app/frontend
 echo "[start] Launching Next.js on port ${FRONTEND_PORT} (backend on ${BACKEND_PORT})..."
 exec npm start -- -p "${FRONTEND_PORT}" -H 0.0.0.0

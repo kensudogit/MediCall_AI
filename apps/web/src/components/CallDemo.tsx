@@ -49,6 +49,7 @@ export function CallDemo() {
   const [loading, setLoading] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [speechSupported, setSpeechSupported] = useState(false);
+  const [apiOnline, setApiOnline] = useState<boolean | null>(null);
 
   const [callerPhone, setCallerPhone] = useState('09012345678');
   const [fullName, setFullName] = useState('');
@@ -56,6 +57,12 @@ export function CallDemo() {
 
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    api<{ status: string }>('/api/health')
+      .then((h) => setApiOnline(h.status === 'ok'))
+      .catch(() => setApiOnline(false));
+  }, []);
 
   useEffect(() => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -90,8 +97,13 @@ export function CallDemo() {
       setActive(true);
       setTurns([{ role: 'assistant', content: res.greeting }]);
       if (voiceEnabled) speak(res.greeting);
-    } catch {
-      setError('通話を開始できませんでした。APIが起動しているか確認してください。');
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'unknown error';
+      if (msg.includes('503') || msg.includes('backend')) {
+        setError('バックエンド API に接続できません。Railway で DATABASE_URL とデプロイ状態を確認してください。');
+      } else {
+        setError(`通話を開始できませんでした: ${msg}`);
+      }
     } finally {
       setLoading(false);
     }
@@ -204,6 +216,13 @@ export function CallDemo() {
         </div>
       </div>
 
+      {apiOnline === false && (
+        <div className="call-error">
+          バックエンド API に接続できません。Railway で Postgres を追加し、
+          <code>DATABASE_URL=${'{{Postgres.DATABASE_URL}}'}</code> を設定して再デプロイしてください。
+        </div>
+      )}
+
       {error && <div className="call-error">{error}</div>}
 
       <div className="call-demo-grid">
@@ -249,7 +268,7 @@ export function CallDemo() {
           )}
           <div className="call-actions">
             {!active && !sessionId && (
-              <button type="button" onClick={startCall} disabled={loading}>
+              <button type="button" onClick={startCall} disabled={loading || apiOnline === false}>
                 {loading ? '接続中…' : '通話開始'}
               </button>
             )}

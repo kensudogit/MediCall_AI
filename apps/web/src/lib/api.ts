@@ -12,7 +12,17 @@ export async function api<T>(path: string, options?: RequestInit): Promise<T> {
     },
     cache: 'no-store',
   });
-  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  if (!res.ok) {
+    let detail = `HTTP ${res.status}`;
+    try {
+      const body = await res.json();
+      if (body?.message) detail = body.message;
+      else if (body?.error) detail = body.error;
+    } catch {
+      /* not json */
+    }
+    throw new Error(detail);
+  }
   if (res.status === 204) return undefined as T;
   return res.json();
 }

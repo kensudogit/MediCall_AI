@@ -69,12 +69,25 @@ public class FaqKnowledgeSyncService {
     }
 
     private void insertChunk(String sourceType, String sourceId, String content, String category) {
-        float[] embedding = openAiService.embed(content);
-        String vector = toPgVector(embedding);
-        jdbcTemplate.update("""
-                INSERT INTO knowledge_chunks (source_type, source_id, content, embedding, metadata)
-                VALUES (?, ?, ?, ?::vector, jsonb_build_object('category', ?))
-                """, sourceType, sourceId, content, vector, category);
+        try {
+            float[] embedding = openAiService.embed(content);
+            String vector = toPgVector(embedding);
+            jdbcTemplate.update("""
+                    INSERT INTO knowledge_chunks (source_type, source_id, content, embedding, metadata)
+                    VALUES (?, ?, ?, ?::vector, jsonb_build_object('category', ?))
+                    """, sourceType, sourceId, content, vector, category);
+        } catch (Exception ex) {
+            log.warn("Vector insert failed for {}:{} — storing text only ({})",
+                    sourceType, sourceId, ex.getMessage());
+            try {
+                jdbcTemplate.update("""
+                        INSERT INTO knowledge_chunks (source_type, source_id, content, metadata)
+                        VALUES (?, ?, ?, jsonb_build_object('category', ?))
+                        """, sourceType, sourceId, content, category);
+            } catch (Exception inner) {
+                log.warn("Text-only knowledge insert failed: {}", inner.getMessage());
+            }
+        }
     }
 
     private String toPgVector(float[] v) {
