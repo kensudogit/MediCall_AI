@@ -1,4 +1,4 @@
-import { api, Appointment } from '@/lib/api';
+import { api, Appointment } from '@/lib/api-server';
 
 const statusLabels: Record<string, string> = {
   CONFIRMED: '確定',

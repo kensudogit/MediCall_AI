@@ -1,22 +1,7 @@
-import { api, CallSession } from '@/lib/api';
+import { api, CallSession } from '@/lib/api-server';
+import { intentLabel } from '@/lib/intents';
 import Link from 'next/link';
-
-const intentLabels: Record<string, string> = {
-  HOURS: '診療時間',
-  HOLIDAY: '休診日',
-  ACCESS: 'アクセス',
-  BELONGINGS: '持ち物',
-  APPOINTMENT_NEW: '新規予約',
-  APPOINTMENT_CHANGE: '予約変更',
-  APPOINTMENT_CANCEL: 'キャンセル',
-  LAB: '検査',
-  BILLING: '会計',
-  PHARMACY: '薬',
-  REFERRAL: '紹介状',
-  EMERGENCY: '緊急',
-  COMPLAINT: '苦情',
-  HUMAN_TRANSFER: '職員転送',
-};
+import { CallExportButton } from '@/components/CallExportButton';
 
 export default async function CallsPage() {
   let calls: CallSession[] = [];
@@ -26,8 +11,13 @@ export default async function CallsPage() {
 
   return (
     <div>
-      <h2>通話履歴</h2>
-      <p className="page-meta">{calls.length} 件の通話記録</p>
+      <div className="page-header-row">
+        <div>
+          <h2>通話履歴</h2>
+          <p className="page-meta">{calls.length} 件の通話記録</p>
+        </div>
+        <CallExportButton />
+      </div>
       <div className="card">
         <table>
           <thead>
@@ -41,7 +31,7 @@ export default async function CallsPage() {
               <tr key={c.id}>
                 <td>{new Date(c.startedAt).toLocaleString('ja-JP')}</td>
                 <td>{c.callerPhone || '-'}</td>
-                <td>{intentLabels[c.intent || ''] || c.intent || '-'}</td>
+                <td>{intentLabel(c.intent)}</td>
                 <td>{c.verified ? '済' : '未'}</td>
                 <td>
                   {c.emergencyFlag && <span className="badge emergency">緊急</span>}{' '}

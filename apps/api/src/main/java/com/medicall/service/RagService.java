@@ -1,5 +1,6 @@
 package com.medicall.service;
 
+import com.medicall.tenant.TenantContext;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import java.util.List;
@@ -19,12 +20,14 @@ public class RagService {
     public String searchContext(String query, int limit) {
         float[] embedding = openAiService.embed(query);
         String vectorLiteral = toPgVector(embedding);
+        Long tenantId = TenantContext.requireTenantId();
         List<Map<String, Object>> rows = jdbcTemplate.queryForList("""
                 SELECT content, 1 - (embedding <=> ?::vector) AS score
                 FROM knowledge_chunks
+                WHERE tenant_id = ?
                 ORDER BY embedding <=> ?::vector
                 LIMIT ?
-                """, vectorLiteral, vectorLiteral, limit);
+                """, vectorLiteral, tenantId, vectorLiteral, limit);
 
         if (rows.isEmpty()) return "";
         StringBuilder sb = new StringBuilder();

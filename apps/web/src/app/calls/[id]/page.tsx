@@ -1,4 +1,5 @@
-import { api, CallSession, CallTurn } from '@/lib/api';
+import { api } from '@/lib/api-server';
+import { CallSession, CallTurn } from '@/lib/api';
 
 export default async function CallDetailPage({ params }: { params: { id: string } }) {
   let session: CallSession | null = null;

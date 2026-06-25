@@ -13,6 +13,9 @@ public class CallSession {
     @Column(name = "connect_contact_id")
     private String connectContactId;
 
+    @Column(name = "tenant_id", nullable = false)
+    private Long tenantId;
+
     @Column(name = "caller_phone")
     private String callerPhone;
 
@@ -37,6 +40,8 @@ public class CallSession {
 
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
+    public Long getTenantId() { return tenantId; }
+    public void setTenantId(Long tenantId) { this.tenantId = tenantId; }
     public String getConnectContactId() { return connectContactId; }
     public void setConnectContactId(String connectContactId) { this.connectContactId = connectContactId; }
     public String getCallerPhone() { return callerPhone; }

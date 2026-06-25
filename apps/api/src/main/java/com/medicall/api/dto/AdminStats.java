@@ -1,5 +1,7 @@
 package com.medicall.api.dto;
 
+import java.util.List;
+
 public record AdminStats(
         long patientCount,
         long appointmentCount,
@@ -7,5 +9,7 @@ public record AdminStats(
         long callCount,
         long activeCalls,
         long transferredCalls,
-        long emergencyCalls
+        long emergencyCalls,
+        List<IntentCount> intentCounts,
+        List<DailyCallCount> callsLast7Days
 ) {}

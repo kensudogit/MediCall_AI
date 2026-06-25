@@ -10,6 +10,9 @@ public class ClinicSettings {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "tenant_id", nullable = false)
+    private Long tenantId;
+
     @Column(name = "clinic_name", nullable = false)
     private String clinicName;
 
@@ -29,6 +32,8 @@ public class ClinicSettings {
     private Instant updatedAt = Instant.now();
 
     public Long getId() { return id; }
+    public Long getTenantId() { return tenantId; }
+    public void setTenantId(Long tenantId) { this.tenantId = tenantId; }
     public String getClinicName() { return clinicName; }
     public void setClinicName(String clinicName) { this.clinicName = clinicName; }
     public String getHoursText() { return hoursText; }

@@ -53,6 +53,8 @@ medicall:
     enabled: ${POLLY_ENABLED:false}
   security:
     dev-mode: ${DEV_MODE:true}
+  tenant:
+    default-slug: ${DEFAULT_TENANT_SLUG:demo}
 
 logging:
   level:

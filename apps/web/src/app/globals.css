@@ -2,7 +2,52 @@
 body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f4f6f8; color: #1a1a2e; }
 .layout { display: flex; min-height: 100vh; }
 .sidebar { width: 220px; background: #0f3460; color: #fff; padding: 1.5rem 1rem; }
-.sidebar h1 { font-size: 1.1rem; margin-bottom: 1.5rem; }
+.sidebar h1 { font-size: 1.1rem; margin-bottom: 1rem; }
+.tenant-switcher {
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255,255,255,0.15);
+}
+.tenant-label {
+  display: block;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #94a3b8;
+  margin-bottom: 0.35rem;
+}
+.tenant-select {
+  width: 100%;
+  padding: 0.4rem 0.5rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+  font-size: 0.8rem;
+}
+.tenant-current { font-size: 0.85rem; color: #cce3ff; }
+.tenant-plan {
+  display: inline-block;
+  margin-top: 0.35rem;
+  font-size: 0.65rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  background: rgba(99,102,241,0.35);
+  color: #e0e7ff;
+}
+.form-hint { font-size: 0.75rem; color: #666; margin-top: 0.25rem; }
+.saas-notes {
+  margin: 0.5rem 0 0 1.25rem;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: #444;
+}
+.saas-notes code {
+  font-size: 0.8rem;
+  background: #f1f5f9;
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+}
 .sidebar nav { display: flex; flex-direction: column; gap: 0.5rem; }
 .sidebar a { color: #cce3ff; text-decoration: none; padding: 0.5rem 0.75rem; border-radius: 6px; }
 .sidebar a:hover { background: rgba(255,255,255,0.1); }
@@ -621,3 +666,127 @@ button.chip:disabled { opacity: 0.5; cursor: not-allowed; }
   text-decoration: none;
 }
 .call-detail-link:hover { text-decoration: underline; }
+
+/* ── Queue, charts, search ── */
+.page-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+.page-header-row h2 { margin-bottom: 0; }
+button.secondary {
+  background: #eef2ff;
+  color: #4338ca;
+}
+button.secondary:hover { background: #e0e7ff; }
+.queue-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.queue-actions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+.notify-on { font-size: 0.8rem; color: #27ae60; font-weight: 600; }
+.queue-section-title {
+  font-size: 1rem;
+  margin: 1rem 0 0.75rem;
+  color: #0f3460;
+}
+.queue-section-title--urgent { color: #c00; }
+.queue-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.queue-card {
+  background: #fff;
+  border-radius: 10px;
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+.queue-card--urgent {
+  border-color: #fca5a5;
+  background: linear-gradient(135deg, #fff, #fef2f2);
+}
+.queue-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+.queue-elapsed { font-size: 0.8rem; color: #666; }
+.queue-card-badges { margin-bottom: 0.5rem; display: flex; flex-wrap: wrap; gap: 0.25rem; }
+.queue-card-meta, .queue-card-time { font-size: 0.85rem; color: #555; margin-bottom: 0.25rem; }
+.queue-card-link {
+  display: inline-block;
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #0f3460;
+  text-decoration: none;
+}
+.queue-card-link:hover { text-decoration: underline; }
+.queue-empty { text-align: center; padding: 2rem; color: #666; }
+.search-bar { margin-bottom: 1rem; }
+.search-fields {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+.search-fields .form-group { flex: 1; min-width: 160px; }
+.chart-card h3 { font-size: 0.95rem; margin-bottom: 1rem; color: #0f3460; }
+.bar-chart {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+  height: 140px;
+  padding-top: 0.5rem;
+}
+.bar-chart-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  justify-content: flex-end;
+  gap: 0.25rem;
+}
+.bar-chart-bar {
+  width: 100%;
+  max-width: 48px;
+  min-height: 4px;
+  background: linear-gradient(180deg, #6366f1, #0f3460);
+  border-radius: 4px 4px 0 0;
+  transition: height 0.3s ease;
+}
+.bar-chart-label { font-size: 0.7rem; color: #666; }
+.bar-chart-value { font-size: 0.75rem; font-weight: 600; color: #0f3460; }
+.intent-chart { display: flex; flex-direction: column; gap: 0.5rem; }
+.intent-row {
+  display: grid;
+  grid-template-columns: 100px 1fr 32px;
+  gap: 0.5rem;
+  align-items: center;
+  font-size: 0.85rem;
+}
+.intent-label { color: #333; }
+.intent-bar-track {
+  height: 8px;
+  background: #eef2ff;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.intent-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #6366f1, #7c3aed);
+  border-radius: 4px;
+}
+.intent-count { text-align: right; font-weight: 600; color: #0f3460; }

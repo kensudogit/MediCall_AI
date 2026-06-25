@@ -2,6 +2,7 @@ package com.medicall.service;
 
 import com.medicall.domain.Patient;
 import com.medicall.repository.PatientRepository;
+import com.medicall.tenant.TenantContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
@@ -15,6 +16,10 @@ public class IdentityVerificationService {
 
     public IdentityVerificationService(PatientRepository patientRepository) {
         this.patientRepository = patientRepository;
+    }
+
+    private Long tenantId() {
+        return TenantContext.requireTenantId();
     }
 
     public record IdentityInput(String fullName, String dateOfBirth, String phoneNumber) {}
@@ -35,8 +40,8 @@ public class IdentityVerificationService {
         }
 
         String phone = normalizePhone(input.phoneNumber());
-        Optional<Patient> existing = patientRepository.findByFullNameAndDateOfBirthAndPhoneNumber(
-                input.fullName().trim(), dob, phone);
+        Optional<Patient> existing = patientRepository.findByTenantIdAndFullNameAndDateOfBirthAndPhoneNumber(
+                tenantId(), input.fullName().trim(), dob, phone);
 
         if (existing.isPresent()) {
             Patient p = existing.get();
@@ -45,12 +50,13 @@ public class IdentityVerificationService {
             return new VerificationResult(true, "本人確認が完了しました。", p.getId());
         }
 
-        Optional<Patient> byPhone = patientRepository.findByPhoneNumber(phone);
+        Optional<Patient> byPhone = patientRepository.findByTenantIdAndPhoneNumber(tenantId(), phone);
         if (byPhone.isPresent()) {
             return new VerificationResult(false, "登録情報と一致しません。職員におつなぎします。", null);
         }
 
         Patient patient = new Patient();
+        patient.setTenantId(tenantId());
         patient.setFullName(input.fullName().trim());
         patient.setDateOfBirth(dob);
         patient.setPhoneNumber(phone);

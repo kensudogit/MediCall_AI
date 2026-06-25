@@ -7,7 +7,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface CallSessionRepository extends JpaRepository<CallSession, UUID> {
-    Optional<CallSession> findByConnectContactId(String connectContactId);
-    List<CallSession> findAllByOrderByStartedAtDesc();
-    List<CallSession> findByStatusOrderByStartedAtDesc(String status);
+    Optional<CallSession> findByTenantIdAndConnectContactId(Long tenantId, String connectContactId);
+    List<CallSession> findByTenantIdOrderByStartedAtDesc(Long tenantId);
+    List<CallSession> findByTenantIdAndStatusOrderByStartedAtDesc(Long tenantId, String status);
+    List<CallSession> findByTenantIdAndPatientIdOrderByStartedAtDesc(Long tenantId, Long patientId);
+    Optional<CallSession> findByIdAndTenantId(UUID id, Long tenantId);
+    long countByTenantId(Long tenantId);
 }

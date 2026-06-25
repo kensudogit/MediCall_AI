@@ -12,6 +12,8 @@ async function proxy(req: NextRequest, { params }: RouteContext) {
   if (contentType) headers.set('content-type', contentType);
   const accept = req.headers.get('accept');
   if (accept) headers.set('accept', accept);
+  const tenantSlug = req.headers.get('x-tenant-slug');
+  if (tenantSlug) headers.set('x-tenant-slug', tenantSlug);
 
   const init: RequestInit = {
     method: req.method,

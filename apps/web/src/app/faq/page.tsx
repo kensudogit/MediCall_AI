@@ -10,8 +10,24 @@ export default function FaqPage() {
     category: '一般', question: '', answer: '', active: true, sortOrder: 0,
   });
 
+  const [reindexing, setReindexing] = useState(false);
+  const [reindexMsg, setReindexMsg] = useState('');
+
   const load = () => api<FaqItem[]>('/api/admin/faq').then(setItems).catch(() => {});
   useEffect(() => { load(); }, []);
+
+  const reindex = async () => {
+    setReindexing(true);
+    setReindexMsg('');
+    try {
+      const res = await api<{ message: string }>('/api/admin/faq/reindex', { method: 'POST' });
+      setReindexMsg(res.message || '再インデックス完了');
+    } catch (e) {
+      setReindexMsg(e instanceof Error ? e.message : 'エラー');
+    } finally {
+      setReindexing(false);
+    }
+  };
 
   const save = async () => {
     if (editing?.id) {
@@ -32,7 +48,15 @@ export default function FaqPage() {
 
   return (
     <div>
-      <h2>FAQ管理</h2>
+      <div className="page-header-row">
+        <h2>FAQ管理</h2>
+        <div className="queue-actions">
+          <button type="button" className="secondary" onClick={reindex} disabled={reindexing}>
+            {reindexing ? 'インデックス中…' : 'AI知識を再インデックス'}
+          </button>
+        </div>
+      </div>
+      {reindexMsg && <p className="page-meta">{reindexMsg}</p>}
       <div className="card">
         <h3>{editing ? 'FAQ編集' : '新規FAQ'}</h3>
         <div className="form-group">

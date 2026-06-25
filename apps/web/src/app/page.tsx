@@ -1,22 +1,6 @@
-import { api, CallSession, AdminStats, HealthStatus } from '@/lib/api';
+import { api, CallSession, AdminStats, HealthStatus } from '@/lib/api-server';
+import { intentLabel } from '@/lib/intents';
 import Link from 'next/link';
-
-const intentLabels: Record<string, string> = {
-  HOURS: '診療時間',
-  HOLIDAY: '休診日',
-  ACCESS: 'アクセス',
-  BELONGINGS: '持ち物',
-  APPOINTMENT_NEW: '新規予約',
-  APPOINTMENT_CHANGE: '予約変更',
-  APPOINTMENT_CANCEL: 'キャンセル',
-  LAB: '検査',
-  BILLING: '会計',
-  PHARMACY: '薬',
-  REFERRAL: '紹介状',
-  EMERGENCY: '緊急',
-  COMPLAINT: '苦情',
-  HUMAN_TRANSFER: '職員転送',
-};
 
 export default async function DashboardPage() {
   let calls: CallSession[] = [];
@@ -37,6 +21,9 @@ export default async function DashboardPage() {
   const transferred = stats?.transferredCalls ?? calls.filter(c => c.transferred).length;
   const emergency = stats?.emergencyCalls ?? calls.filter(c => c.emergencyFlag).length;
   const totalCalls = stats?.callCount ?? calls.length;
+  const maxDaily = Math.max(1, ...(stats?.callsLast7Days?.map(d => d.count) ?? [1]));
+  const topIntents = stats?.intentCounts?.slice(0, 6) ?? [];
+  const maxIntent = Math.max(1, ...topIntents.map(i => i.count));
 
   return (
     <div>
@@ -54,9 +41,55 @@ export default async function DashboardPage() {
           <div className="card"><div className="stat">{stats.appointmentCount}</div><div className="label">予約総数</div></div>
         </div>
       )}
+
+      {stats?.callsLast7Days && stats.callsLast7Days.length > 0 && (
+        <div className="card chart-card">
+          <h3>直近7日間の通話数</h3>
+          <div className="bar-chart">
+            {stats.callsLast7Days.map(d => (
+              <div key={d.date} className="bar-chart-col">
+                <div
+                  className="bar-chart-bar"
+                  style={{ height: `${(d.count / maxDaily) * 100}%` }}
+                  title={`${d.count}件`}
+                />
+                <span className="bar-chart-label">{d.date.slice(5)}</span>
+                <span className="bar-chart-value">{d.count}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {topIntents.length > 0 && (
+        <div className="card chart-card">
+          <h3>問い合わせ意図（上位）</h3>
+          <div className="intent-chart">
+            {topIntents.map(i => (
+              <div key={i.intent} className="intent-row">
+                <span className="intent-label">{intentLabel(i.intent)}</span>
+                <div className="intent-bar-track">
+                  <div
+                    className="intent-bar-fill"
+                    style={{ width: `${(i.count / maxIntent) * 100}%` }}
+                  />
+                </div>
+                <span className="intent-count">{i.count}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="card">
         <p>API: <strong>{health.status}</strong> / OpenAI: <strong>{health.openai ? '接続済' : '未設定'}</strong></p>
+        {active > 0 && (
+          <p style={{ marginTop: '0.5rem' }}>
+            <Link href="/queue">ライブキューで {active} 件の進行中通話を監視 →</Link>
+          </p>
+        )}
       </div>
+
       <h3 style={{ marginTop: '1.5rem', marginBottom: '0.5rem' }}>直近の通話</h3>
       <div className="card">
         <table>
@@ -66,7 +99,7 @@ export default async function DashboardPage() {
               <tr key={c.id}>
                 <td>{new Date(c.startedAt).toLocaleString('ja-JP')}</td>
                 <td>{c.callerPhone || '-'}</td>
-                <td>{intentLabels[c.intent || ''] || c.intent || '-'}</td>
+                <td>{intentLabel(c.intent)}</td>
                 <td>
                   {c.emergencyFlag && <span className="badge emergency">緊急</span>}{' '}
                   {c.transferred && <span className="badge transfer">転送</span>}{' '}

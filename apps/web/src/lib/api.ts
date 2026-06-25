@@ -1,3 +1,5 @@
+import { getClientTenant } from './tenant';
+
 const API_BASE =
   typeof window !== 'undefined'
     ? ''
@@ -8,6 +10,7 @@ export async function api<T>(path: string, options?: RequestInit): Promise<T> {
     ...options,
     headers: {
       'Content-Type': 'application/json',
+      'X-Tenant-Slug': getClientTenant(),
       ...(options?.headers || {}),
     },
     cache: 'no-store',
@@ -25,6 +28,25 @@ export async function api<T>(path: string, options?: RequestInit): Promise<T> {
   }
   if (res.status === 204) return undefined as T;
   return res.json();
+}
+
+export interface Tenant {
+  id: number;
+  slug: string;
+  name: string;
+  status: string;
+  plan: string;
+  createdAt: string;
+}
+
+export interface CreateTenantRequest {
+  slug: string;
+  name: string;
+  plan?: string;
+  hoursText?: string;
+  holidaysText?: string;
+  accessText?: string;
+  belongingsText?: string;
 }
 
 export interface CallSession {
@@ -87,6 +109,23 @@ export interface AdminStats {
   activeCalls: number;
   transferredCalls: number;
   emergencyCalls: number;
+  intentCounts?: { intent: string; count: number }[];
+  callsLast7Days?: { date: string; count: number }[];
+}
+
+export interface Patient {
+  id: number;
+  fullName: string;
+  nameKana?: string;
+  dateOfBirth: string;
+  phoneNumber: string;
+  verified: boolean;
+}
+
+export interface PatientDetail {
+  patient: Patient;
+  recentCalls: CallSession[];
+  appointments: Appointment[];
 }
 
 export interface HealthStatus {
@@ -98,6 +137,7 @@ export interface CallStartResponse {
   sessionId: string;
   status: string;
   greeting: string;
+  tenantSlug?: string;
 }
 
 export interface CallResponse {

@@ -4,6 +4,7 @@ import com.medicall.domain.ClinicSettings;
 import com.medicall.domain.FaqItem;
 import com.medicall.repository.ClinicSettingsRepository;
 import com.medicall.repository.FaqItemRepository;
+import com.medicall.tenant.TenantContext;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,20 +28,27 @@ public class FaqService {
         this.knowledgeSync = knowledgeSync;
     }
 
+    private Long tenantId() {
+        return TenantContext.requireTenantId();
+    }
+
     public List<FaqItem> listActive() {
-        return faqItemRepository.findByActiveTrueOrderBySortOrderAsc();
+        return faqItemRepository.findByTenantIdAndActiveTrueOrderBySortOrderAsc(tenantId());
     }
 
     public List<FaqItem> listAll() {
-        return faqItemRepository.findAllByOrderBySortOrderAsc();
+        return faqItemRepository.findByTenantIdOrderBySortOrderAsc(tenantId());
     }
 
     public Optional<FaqItem> findById(Long id) {
-        return faqItemRepository.findById(id);
+        return faqItemRepository.findByIdAndTenantId(id, tenantId());
     }
 
     @Transactional
     public FaqItem save(FaqItem item) {
+        if (item.getTenantId() == null) {
+            item.setTenantId(tenantId());
+        }
         item.setUpdatedAt(Instant.now());
         FaqItem saved = faqItemRepository.save(item);
         knowledgeSync.syncFaqItem(saved);
@@ -49,8 +57,10 @@ public class FaqService {
 
     @Transactional
     public void delete(Long id) {
-        faqItemRepository.deleteById(id);
-        knowledgeSync.deleteFaqItem(id);
+        faqItemRepository.findByIdAndTenantId(id, tenantId()).ifPresent(item -> {
+            faqItemRepository.delete(item);
+            knowledgeSync.deleteFaqItem(id);
+        });
     }
 
     public String buildFaqCatalog() {
@@ -84,24 +94,27 @@ public class FaqService {
     }
 
     public ClinicSettings getClinicSettings() {
-        return clinicSettingsRepository.findAll().stream().findFirst().orElseGet(this::defaultSettings);
+        return clinicSettingsRepository.findByTenantId(tenantId()).orElseGet(this::createDefaultSettings);
     }
 
     @Transactional
     public ClinicSettings updateClinicSettings(ClinicSettings settings) {
+        settings.setTenantId(tenantId());
         settings.setUpdatedAt(Instant.now());
         ClinicSettings saved = clinicSettingsRepository.save(settings);
         knowledgeSync.syncClinicSettings(saved);
         return saved;
     }
 
-    private ClinicSettings defaultSettings() {
+    @Transactional
+    public ClinicSettings createDefaultSettings() {
         ClinicSettings s = new ClinicSettings();
+        s.setTenantId(tenantId());
         s.setClinicName("MediCall クリニック");
         s.setHoursText("平日 9:00-18:00");
         s.setHolidaysText("土日祝休診");
         s.setAccessText("駅徒歩5分");
         s.setBelongingsText("保険証・診察券");
-        return s;
+        return clinicSettingsRepository.save(s);
     }
 }

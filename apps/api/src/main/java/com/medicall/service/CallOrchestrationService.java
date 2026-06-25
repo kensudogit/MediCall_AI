@@ -3,6 +3,7 @@ package com.medicall.service;
 import com.medicall.domain.*;
 import com.medicall.repository.CallSessionRepository;
 import com.medicall.repository.CallTurnRepository;
+import com.medicall.tenant.TenantContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
@@ -55,6 +56,7 @@ public class CallOrchestrationService {
     @Transactional
     public StartSessionResult startSession(String connectContactId, String callerPhone) {
         CallSession session = new CallSession();
+        session.setTenantId(TenantContext.requireTenantId());
         session.setConnectContactId(connectContactId);
         session.setCallerPhone(callerPhone);
         session.setStatus("ACTIVE");
@@ -68,7 +70,7 @@ public class CallOrchestrationService {
 
     @Transactional
     public CallResponse processUtterance(CallRequest req) {
-        CallSession session = sessionRepository.findById(req.sessionId())
+        CallSession session = sessionRepository.findByIdAndTenantId(req.sessionId(), TenantContext.requireTenantId())
                 .orElseThrow(() -> new IllegalArgumentException("Session not found"));
 
         saveTurn(session.getId(), "caller", req.utterance(), null, null);

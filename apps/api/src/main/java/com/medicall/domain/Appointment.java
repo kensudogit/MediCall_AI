@@ -11,6 +11,9 @@ public class Appointment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "tenant_id", nullable = false)
+    private Long tenantId;
+
     @Column(name = "patient_id")
     private Long patientId;
 
@@ -28,6 +31,8 @@ public class Appointment {
     private Instant updatedAt = Instant.now();
 
     public Long getId() { return id; }
+    public Long getTenantId() { return tenantId; }
+    public void setTenantId(Long tenantId) { this.tenantId = tenantId; }
     public Long getPatientId() { return patientId; }
     public void setPatientId(Long patientId) { this.patientId = patientId; }
     public LocalDateTime getScheduledAt() { return scheduledAt; }

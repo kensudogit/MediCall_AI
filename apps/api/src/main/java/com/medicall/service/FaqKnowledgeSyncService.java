@@ -2,6 +2,7 @@ package com.medicall.service;
 
 import com.medicall.domain.ClinicSettings;
 import com.medicall.domain.FaqItem;
+import com.medicall.tenant.TenantContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -23,6 +24,10 @@ public class FaqKnowledgeSyncService {
         this.jdbcTemplate = jdbcTemplate;
         this.faqService = faqService;
         this.openAiService = openAiService;
+    }
+
+    private Long tenantId() {
+        return TenantContext.requireTenantId();
     }
 
     @Transactional
@@ -52,7 +57,7 @@ public class FaqKnowledgeSyncService {
 
     @Transactional
     public void syncAll() {
-        log.info("Syncing FAQ and clinic knowledge to pgvector...");
+        log.info("Syncing FAQ knowledge for tenant {}...", TenantContext.requireSlug());
         faqService.listAll().forEach(this::syncFaqItem);
         syncClinicSettings(faqService.getClinicSettings());
         log.info("Knowledge sync complete (OpenAI configured: {})", openAiService.isConfigured());
@@ -60,12 +65,14 @@ public class FaqKnowledgeSyncService {
 
     private void deleteChunk(String sourceType, String sourceId) {
         jdbcTemplate.update(
-                "DELETE FROM knowledge_chunks WHERE source_type = ? AND source_id = ?",
-                sourceType, sourceId);
+                "DELETE FROM knowledge_chunks WHERE tenant_id = ? AND source_type = ? AND source_id = ?",
+                tenantId(), sourceType, sourceId);
     }
 
     private void deleteChunksByType(String sourceType) {
-        jdbcTemplate.update("DELETE FROM knowledge_chunks WHERE source_type = ?", sourceType);
+        jdbcTemplate.update(
+                "DELETE FROM knowledge_chunks WHERE tenant_id = ? AND source_type = ?",
+                tenantId(), sourceType);
     }
 
     private void insertChunk(String sourceType, String sourceId, String content, String category) {
@@ -73,17 +80,17 @@ public class FaqKnowledgeSyncService {
             float[] embedding = openAiService.embed(content);
             String vector = toPgVector(embedding);
             jdbcTemplate.update("""
-                    INSERT INTO knowledge_chunks (source_type, source_id, content, embedding, metadata)
-                    VALUES (?, ?, ?, ?::vector, jsonb_build_object('category', ?))
-                    """, sourceType, sourceId, content, vector, category);
+                    INSERT INTO knowledge_chunks (tenant_id, source_type, source_id, content, embedding, metadata)
+                    VALUES (?, ?, ?, ?, ?::vector, jsonb_build_object('category', ?))
+                    """, tenantId(), sourceType, sourceId, content, vector, category);
         } catch (Exception ex) {
             log.warn("Vector insert failed for {}:{} — storing text only ({})",
                     sourceType, sourceId, ex.getMessage());
             try {
                 jdbcTemplate.update("""
-                        INSERT INTO knowledge_chunks (source_type, source_id, content, metadata)
-                        VALUES (?, ?, ?, jsonb_build_object('category', ?))
-                        """, sourceType, sourceId, content, category);
+                        INSERT INTO knowledge_chunks (tenant_id, source_type, source_id, content, metadata)
+                        VALUES (?, ?, ?, ?, jsonb_build_object('category', ?))
+                        """, tenantId(), sourceType, sourceId, content, category);
             } catch (Exception inner) {
                 log.warn("Text-only knowledge insert failed: {}", inner.getMessage());
             }

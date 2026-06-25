@@ -11,6 +11,9 @@ public class Patient {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "tenant_id", nullable = false)
+    private Long tenantId;
+
     @Column(name = "full_name", nullable = false)
     private String fullName;
 
@@ -29,6 +32,8 @@ public class Patient {
     private Instant createdAt = Instant.now();
 
     public Long getId() { return id; }
+    public Long getTenantId() { return tenantId; }
+    public void setTenantId(Long tenantId) { this.tenantId = tenantId; }
     public String getFullName() { return fullName; }
     public void setFullName(String fullName) { this.fullName = fullName; }
     public String getNameKana() { return nameKana; }

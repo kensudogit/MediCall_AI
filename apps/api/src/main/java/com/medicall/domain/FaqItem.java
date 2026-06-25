@@ -10,6 +10,9 @@ public class FaqItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "tenant_id", nullable = false)
+    private Long tenantId;
+
     @Column(nullable = false)
     private String category;
 
@@ -28,6 +31,8 @@ public class FaqItem {
     private Instant updatedAt = Instant.now();
 
     public Long getId() { return id; }
+    public Long getTenantId() { return tenantId; }
+    public void setTenantId(Long tenantId) { this.tenantId = tenantId; }
     public String getCategory() { return category; }
     public void setCategory(String category) { this.category = category; }
     public String getQuestion() { return question; }

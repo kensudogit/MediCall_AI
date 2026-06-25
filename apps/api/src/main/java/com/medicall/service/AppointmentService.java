@@ -5,6 +5,7 @@ import com.medicall.domain.Patient;
 import com.medicall.repository.AppointmentRepository;
 import com.medicall.repository.PatientRepository;
 import com.medicall.api.dto.AppointmentView;
+import com.medicall.tenant.TenantContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
@@ -27,14 +28,18 @@ public class AppointmentService {
         this.patientRepository = patientRepository;
     }
 
+    private Long tenantId() {
+        return TenantContext.requireTenantId();
+    }
+
     public List<Appointment> listAll() {
-        return appointmentRepository.findByStatusOrderByScheduledAtAsc("CONFIRMED");
+        return appointmentRepository.findByTenantIdAndStatusOrderByScheduledAtAsc(tenantId(), "CONFIRMED");
     }
 
     public List<AppointmentView> listAllForAdmin() {
-        Map<Long, Patient> patients = patientRepository.findAll().stream()
+        Map<Long, Patient> patients = patientRepository.findByTenantIdOrderByFullNameAsc(tenantId()).stream()
                 .collect(Collectors.toMap(Patient::getId, p -> p));
-        return appointmentRepository.findAllByOrderByScheduledAtDesc().stream()
+        return appointmentRepository.findByTenantIdOrderByScheduledAtDesc(tenantId()).stream()
                 .map(a -> toView(a, patients.get(a.getPatientId())))
                 .toList();
     }
@@ -53,12 +58,13 @@ public class AppointmentService {
     }
 
     public List<Appointment> listByPatient(Long patientId) {
-        return appointmentRepository.findByPatientIdOrderByScheduledAtDesc(patientId);
+        return appointmentRepository.findByTenantIdAndPatientIdOrderByScheduledAtDesc(tenantId(), patientId);
     }
 
     @Transactional
     public Appointment create(Long patientId, String scheduledAt, String department, String notes) {
         Appointment appt = new Appointment();
+        appt.setTenantId(tenantId());
         appt.setPatientId(patientId);
         appt.setScheduledAt(parseDateTime(scheduledAt));
         appt.setDepartment(department != null ? department : "内科");
@@ -69,7 +75,7 @@ public class AppointmentService {
 
     @Transactional
     public Optional<Appointment> reschedule(Long id, String newScheduledAt) {
-        return appointmentRepository.findById(id).map(appt -> {
+        return appointmentRepository.findByIdAndTenantId(id, tenantId()).map(appt -> {
             appt.setScheduledAt(parseDateTime(newScheduledAt));
             appt.setUpdatedAt(Instant.now());
             return appointmentRepository.save(appt);
@@ -78,7 +84,7 @@ public class AppointmentService {
 
     @Transactional
     public Optional<Appointment> cancel(Long id) {
-        return appointmentRepository.findById(id).map(appt -> {
+        return appointmentRepository.findByIdAndTenantId(id, tenantId()).map(appt -> {
             appt.setStatus("CANCELLED");
             appt.setUpdatedAt(Instant.now());
             return appointmentRepository.save(appt);
