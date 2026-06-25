@@ -1,0 +1,32 @@
+# Java
+apps/api/target/
+apps/api/.mvn/wrapper/maven-wrapper.jar
+*.class
+*.jar
+*.war
+
+# Node
+apps/web/node_modules/
+apps/web/.next/
+apps/web/out/
+
+# Env
+.env
+.env.*
+!.env.example
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+
+# Terraform
+infra/terraform/**/.terraform/
+infra/terraform/**/*.tfstate
+infra/terraform/**/*.tfstate.*
+*.tfvars
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,54 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: medicall-postgres
+    environment:
+      POSTGRES_DB: medicall
+      POSTGRES_USER: medicall
+      POSTGRES_PASSWORD: medicall_dev
+    ports:
+      - "5434:5432"
+    volumes:
+      - medicall_pgdata:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U medicall -d medicall"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: ../apps/api
+      dockerfile: Dockerfile
+    container_name: medicall-api
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/medicall
+      SPRING_DATASOURCE_USERNAME: medicall
+      SPRING_DATASOURCE_PASSWORD: medicall_dev
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      GOOGLE_APPLICATION_CREDENTIALS: /app/credentials/google.json
+      AWS_REGION: ap-northeast-1
+      OAUTH2_ISSUER_URI: ${OAUTH2_ISSUER_URI:-http://localhost:8080}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ../apps/api/credentials:/app/credentials:ro
+
+  web:
+    build:
+      context: ../apps/web
+      dockerfile: Dockerfile
+    container_name: medicall-web
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8080
+    depends_on:
+      - api
+
+volumes:
+  medicall_pgdata:
