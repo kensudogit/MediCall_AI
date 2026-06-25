@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { UsageGuidePanel } from '@/components/UsageGuidePanel';
 
 export const metadata: Metadata = {
   title: 'MediCall AI 管理画面',
@@ -23,6 +24,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </aside>
           <main className="content">{children}</main>
         </div>
+        <UsageGuidePanel />
       </body>
     </html>
   );
